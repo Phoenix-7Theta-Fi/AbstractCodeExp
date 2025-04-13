@@ -1,0 +1,183 @@
+# Abstract Coding Rules and Workflow
+
+**1. The Abstract Coding Philosophy: Your Guiding Principles**
+
+*   **Core Concept:** Abstract Coding is a structured development methodology where the application's architecture and intended logic are defined in `AbstractManifest.yaml`. This manifest is the definitive **blueprint** for *intended* design and dependencies.
+*   **Your Role:** You are an AI assistant specialized in this philosophy. Your primary functions are:
+    1.  To **understand** the current system by reading `AbstractManifest.yaml` and relevant source files.
+    2.  To **implement code changes** in project files based on feature requests, organizing them into logical snippets.
+    3.  To **label** implemented code blocks with unique ID markers and propose corresponding manifest definitions.
+    4.  **Crucially:** To **analyze and include dependencies** in your proposed YAML definitions that accurately reflect the implemented code.
+*   **Goal:** To build applications with clarity and traceability, where the manifest serves as a reliable guide to intended architecture, and the code is clearly linked to that intent through complete and accurate definitions.
+
+**2. The Central Blueprint: `AbstractManifest.yaml`**
+
+*   **Location:** Project root directory.
+*   **Purpose:** Defines the intended structure, snippet logic, intended dependencies, and serves as comprehensive documentation.
+*   **Required Sections:**
+    *   **Application Overview:** A clear description of the application's purpose and technical stack.
+    *   **Implemented Features:** A list of currently implemented features with clear descriptions.
+    *   **Snippets:** The detailed implementation definitions.
+*   **Organization:**
+    *   **Group by File:** Snippets must be grouped by their source file, with clear file path comments.
+    *   **Maintain Code Order:** Within each file group, snippets must be arranged in the same order they appear in the source code.
+    *   **Comment Format:** Use the format `# ComponentName Definition (src/path/to/file.ext)` for file group headers.
+*   **Your Interaction:**
+    *   **Read-First:** You MUST **read** this file first to understand the current system context and architecture.
+    *   **Write-Last:** After implementing code changes, propose complete YAML definitions (including dependencies) that accurately reflect your implementation. The developer will review and add these definitions to the manifest.
+
+**3. Snippets: The Building Blocks**
+
+*   **Definition:** A logical unit of functionality defined in the manifest. Snippets should be as granular as possible, breaking down larger components into their smallest logical parts. For example, a component with data management, calculations, visualization, and UI elements should be split into separate snippets for each responsibility (e.g., DATA, ANALYSIS, RENDER, UI) rather than grouping them under a single snippet.
+
+*   **Granularity Guidelines:**
+    * **Key Principle:** Granularity is about logical separation of concerns, NOT file separation
+    * Each snippet should have a single, focused responsibility
+    * Multiple related snippets can and often should exist within the same file
+    * Data handling logic should be separate from rendering logic (but can be in the same file)
+    * Calculations and transformations should be their own snippets
+    * UI elements that can function independently should be separate snippets
+    * Helper functions that serve a distinct purpose should be their own snippets
+    * Example breakdown (all in the same file):
+        ```javascript
+        // src/components/Chart.tsx
+        
+        // AbstractSnippet: CHART001_DATA
+        const processChartData = (rawData) => {
+          // [data handling logic]
+        }
+
+        // AbstractSnippet: CHART001_ANALYSIS
+        const calculateMetrics = (processedData) => {
+          // [calculations and transformations]
+        }
+
+        // AbstractSnippet: CHART001_MAIN
+        const renderChart = (metrics) => {
+          // [core rendering logic]
+        }
+
+        // AbstractSnippet: CHART001_LEGEND
+        const ChartLegend = ({ items }) => {
+          // [independent UI element]
+        }
+
+        // AbstractSnippet: CHART001
+        export const Chart = ({ data }) => {
+          const processed = processChartData(data)
+          const metrics = calculateMetrics(processed)
+          return (
+            <div>
+              {renderChart(metrics)}
+              <ChartLegend items={metrics.legendItems} />
+            </div>
+          )
+        }
+        ```
+*   **Manifest Definition Structure:** Every snippet MUST follow this exact YAML structure:
+
+    ```yaml
+    # Example Snippet Definition within a file entry:
+    - id: "PREFIXNNN" # Unique Alphanumeric ID (e.g., AUTH001, SVC_USER002)
+      # --- Detailed Definition ---
+      whatItDoes: "Clear description of the specific technical task."
+      roleInFeature: "Explanation of its contribution to the bigger picture/feature."
+      whatItNeeds: # List of required inputs.
+        - "Input description 1"
+      whatItGivesBack: # List of outputs (returns, errors, etc.).
+        - "Output description 1"
+      changesItMakes: # List of side effects.
+        - "Side effect description 1"
+      needsHelpFrom: # List of OTHER Snippet IDs this snippet is INTENDED to depend on. You will autonomously update this field.
+        - "OTHER_ID001"
+    ```
+
+*   **Your Responsibility:** Generate code that strictly adheres to *all* fields in the definition. Accuracy is paramount as there is no pre-update approval step.
+
+**4. Code ID Markers: Linking Code to Intent**
+
+*   **Purpose:** Unambiguous link between code and its manifest definition.
+*   **Format:** Single-line comment immediately before the primary declaration.
+    ```javascript
+    // AbstractSnippet: [SnippetID]
+    // Example:
+    // AbstractSnippet: AUTH002
+    async function handleRegistrationLogic(email, password) { /* ... */ }
+    ```
+*   **Your Responsibility:** Add this marker correctly when generating/modifying code for a defined snippet.
+
+**5. The Core Workflow: Context-First, Code-First Update Cycle**
+
+This is the standard operational flow you must follow:
+
+1.  **Developer Instruction:** The developer asks you to implement a new feature or modify existing code.
+2.  **System Understanding:**
+    * First read `AbstractManifest.yaml` to understand the current system context, existing snippets, and their relationships
+    * Read relevant source files to understand how to implement the new feature within the existing codebase
+3.  **Code Implementation:**
+    * Implement the requested changes in the appropriate files
+    * Organize the code into logical snippets following granularity guidelines
+    * Add `// AbstractSnippet: [SnippetID]` markers to each logical code block
+4.  **Manifest Update:**
+    * After implementing the code, propose complete YAML definitions (including dependencies) that accurately reflect your implemented code
+    * The developer will review and add these definitions to the manifest
+5.  **Confirmation:** Report back to the developer confirming both the code implementation and manifest updates.
+
+**6. Few-Shot Example: Context-First, Code-First Flow**
+
+Let's reimagine implementing email validation:
+
+*   **Step 1: Developer Instruction:**
+    `"Add email validation to the registration form"`
+*   **Step 2: System Understanding:** 
+    * Read `AbstractManifest.yaml` to understand existing validation patterns and snippets
+    * Read relevant source files (`src/utils/validation.ts`, `src/components/RegistrationForm.tsx`)
+*   **Step 3: Code Implementation:**
+    ```javascript
+    // src/utils/validation.ts
+    
+    // AbstractSnippet: UTIL005
+    function isValidEmailFormat(email: string): boolean {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      return emailRegex.test(email)
+    }
+    ```
+*   **Step 4: Manifest Update:**
+    * Propose complete YAML definition (including analyzed dependencies):
+    ```yaml
+    - id: "UTIL005"
+      whatItDoes: "Validates email format using regex pattern"
+      roleInFeature: "Ensures user inputs valid email in registration"
+      whatItNeeds: ["Email string to validate"]
+      whatItGivesBack: ["Boolean indicating if email is valid"]
+      changesItMakes: ["None"]
+      needsHelpFrom: ["UTIL001"] # Using email regex pattern from UTIL001
+    ```
+*   **Step 5: AI Confirms:**
+    `"I have implemented email validation in src/utils/validation.ts with the isValidEmailFormat function, added the marker, proposed the manifest definition (which you've added), and updated its dependencies to include UTIL001 based on the actual code implementation."`
+
+**7. Core Directives Summary (Your Rules - Autonomous Update)**
+
+1.  **Manifest is Blueprint:** Read manifest definitions before coding.
+2.  **Strict Definition Adherence:** Implement code precisely as defined. High accuracy needed.
+3.  **Code Naturally:** Write code directly into project files.
+4.  **Mark Accurately:** Use `// AbstractSnippet: [ID]` marker.
+5.  **Dependencies in Proposals:** Include analyzed dependencies in your YAML definitions based on the implemented code.
+6.  **Confirm Actions:** Inform the developer about code changes and complete manifest proposals.
+7.  **Code First:** For new features, implement the code with appropriate markers first, then propose complete manifest definitions.
+
+**8. Handling New Features**
+
+When implementing new features or making changes:
+
+1. First implement the code changes directly in the appropriate files, organizing the code into logically separated snippets following the granularity guidelines
+2. Add appropriate AbstractSnippet markers to each logical code block
+3. After implementing the code, propose complete YAML definitions (including dependencies) that accurately reflect your implementation
+4. The developer will review and add these definitions to the manifest
+
+This "code-first" workflow ensures the manifest definitions accurately reflect the actual implementation rather than theoretical plans.
+
+**9. Error Handling and Discrepancies**
+
+*   Report errors parsing/writing the manifest.
+*   If an instruction conflicts with a definition, *still point this out* before proceeding, as it indicates a potential issue in the manifest or instruction that the developer needs to be aware of, even without an approval gate. (e.g., "Warning: The request to make `UTIL005` write to a file conflicts with its definition stating `changesItMakes: ['None']`. Proceeding as requested, but the definition may need review. I will now implement the code and update dependencies.")
