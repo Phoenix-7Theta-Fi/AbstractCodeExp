@@ -12,6 +12,7 @@ description: |
 features:
   - "Dark Theme Interface: Application-wide dark theme implementation optimized for healthcare environments"
   - "Welcome Dashboard: Central landing page providing overview of healthcare services and features"
+  - "Diet Analytics Chart: Combined Macronutrient and Micronutrient visualization using Apache ECharts" # Added Feature
 
 snippets:
   # Layout Component Definition (src/app/layout.tsx)
