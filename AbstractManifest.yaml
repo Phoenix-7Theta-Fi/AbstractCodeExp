@@ -12,7 +12,8 @@ description: |
 features:
   - "Dark Theme Interface: Application-wide dark theme implementation optimized for healthcare environments"
   - "Welcome Dashboard: Central landing page providing overview of healthcare services and features"
-  - "Diet Analytics Chart: Combined Macronutrient and Micronutrient visualization using Apache ECharts" # Added Feature
+  - "Diet Analytics Chart: Combined Macronutrient and Micronutrient visualization using Apache ECharts"
+  - "User Authentication: SQLite-based authentication system with login and registration functionality" # New Feature
 
 snippets:
   # Layout Component Definition (src/app/layout.tsx)
@@ -27,6 +28,66 @@ snippets:
     changesItMakes:
       - "Sets up the base HTML structure"
       - "Configures fonts and global styling"
+      - "Renders the main application Navbar."
+      - "Wraps content with AuthProvider." # Added change
+    needsHelpFrom: ["NAV001", "AUTH_CTX001"] # Updated dependencies
+
+  # Navbar Component Definitions (src/components/layout/Navbar.tsx)
+  - id: "NAV001_SIGNOUT"
+    whatItDoes: "Renders a sign-out button and handles the sign-out process. It calls the logout API, manages loading/error states, and redirects the user upon successful logout."
+    roleInFeature: "Provides the interactive element for user session termination within the navbar."
+    whatItNeeds:
+      - "useRouter hook from next/navigation for redirection."
+      - "useState hook from React for managing loading and error states."
+      - "Button component (UI001)."
+      - "AuthContext via useAuth hook (AUTH_CTX001)." # Added need
+    whatItGivesBack:
+      - "A button element that triggers the sign-out flow."
+      - "Visual feedback (loading state, error message)."
+    changesItMakes:
+      - "Makes a POST request to /api/auth/logout (API003)."
+      - "Calls the logout function from AuthContext." # Added change
+      - "Redirects the user to '/' upon successful logout."
+      - "Updates internal loading and error states."
+      needsHelpFrom: ["UI001", "API003", "AUTH_CTX001"] # Updated dependencies
+
+  - id: "NAV001"
+    whatItDoes: "Renders the main application navigation bar conditionally based on user authentication status read from AuthContext. It displays the navbar (title and sign-out button) only if the user is authenticated according to the context." # Updated description
+    roleInFeature: "Provides consistent top-level navigation for authenticated users and access to sign-out functionality, driven by global auth state." # Updated role
+    whatItNeeds:
+      - "SignOutButton component (NAV001_SIGNOUT)."
+      - "AuthContext via useAuth hook (AUTH_CTX001)." # Updated needs
+    whatItGivesBack:
+      - "A styled navbar element (<nav>) if the user is authenticated (per context), otherwise null." # Updated output
+    changesItMakes:
+      - "Reads authentication status and loading state from AuthContext." # Updated changes
+    needsHelpFrom: ["NAV001_SIGNOUT", "AUTH_CTX001"] # Updated dependencies
+
+  # Database Components (src/lib/db/index.ts)
+  - id: "DB001"
+    whatItDoes: "Initializes and configures SQLite database connection"
+    roleInFeature: "Provides database connectivity for user authentication"
+    whatItNeeds:
+      - "Database schema file"
+      - "File system access for database creation"
+    whatItGivesBack:
+      - "Configured SQLite database instance"
+    changesItMakes:
+      - "Creates data directory if not exists"
+      - "Creates SQLite database file if not exists"
+      - "Initializes database schema"
+    needsHelpFrom: []
+
+  # Type Definitions (src/types/auth.ts)
+  - id: "TYPES001"
+    whatItDoes: "Defines TypeScript interfaces for authentication"
+    roleInFeature: "Provides type safety for authentication-related data structures"
+    whatItNeeds: []
+    whatItGivesBack:
+      - "User interface definition"
+      - "UserCredentials interface definition"
+      - "AuthResponse interface definition"
+    changesItMakes: []
     needsHelpFrom: []
 
   # Diet Analytics Component Definitions (src/components/DietAnalytics/DietAnalytics.tsx)
@@ -39,7 +100,7 @@ snippets:
     changesItMakes: []
     needsHelpFrom: []
 
-  - id: "DIET001_ANALYSIS" # Updated Definition (Now generates ECharts options)
+  - id: "DIET001_ANALYSIS"
     whatItDoes: "Processes raw diet data and generates a complete configuration object (options) for Apache ECharts, including series data, axes, tooltip, legend, and styling for a stacked bar chart."
     roleInFeature: "Transforms raw diet entries into the specific option format required by the ECharts library for visualization."
     whatItNeeds:
@@ -49,7 +110,7 @@ snippets:
     changesItMakes: []
     needsHelpFrom: ["DIET001_DATA"]
 
-  - id: "DIET001_CHART" # Updated Definition (Now uses ReactECharts)
+  - id: "DIET001_CHART"
     whatItDoes: "Renders the diet analytics chart using the 'ReactECharts' component, applying the provided ECharts option object."
     roleInFeature: "Visualizes the processed diet data using the Apache ECharts library via the 'echarts-for-react' wrapper."
     whatItNeeds:
@@ -68,7 +129,6 @@ snippets:
     changesItMakes: []
     needsHelpFrom: ["DIET001_DATA", "DIET001_ANALYSIS", "DIET001_CHART"]
 
-  # Updated Dashboard Definition
   - id: "DASH001"
     whatItDoes: "Renders the main welcome page of the healthcare dashboard with diet analytics"
     roleInFeature: "Provides initial landing page with welcome message and diet visualization"
@@ -79,3 +139,162 @@ snippets:
       - "Displays welcome content"
       - "Shows diet analytics visualization"
     needsHelpFrom: ["DIET001"]
+
+  # Home Page Component Definition (src/app/page.tsx)
+  - id: "HOME001"
+    whatItDoes: "Renders the main landing page, acting as an authentication portal. It displays a welcome message, provides toggle buttons to switch between Login and Register views, and conditionally renders either the LoginForm or RegisterForm component based on user selection. Also includes a link to the demo dashboard."
+    roleInFeature: "Serves as the primary entry point for users, directing them to either log in or register."
+    whatItNeeds:
+      - "useState hook from React for managing the view state (login/register)."
+      - "Link component from Next.js for navigation."
+      - "LoginForm component (AUTH004)."
+      - "RegisterForm component (AUTH005)."
+      - "Button component (UI001)."
+    whatItGivesBack:
+      - "A client-side rendered page containing welcome text, toggle buttons, and either a login or registration form."
+    changesItMakes:
+      - "Updates the internal 'isLogin' state when toggle buttons are clicked."
+    needsHelpFrom: ["AUTH004", "AUTH005", "UI001"] # Depends on the login form, register form, and button components
+
+  # Authentication Service Definitions (src/lib/auth/service.ts)
+  - id: "AUTH001"
+    whatItDoes: "Sets up the authentication service by importing dependencies (bcrypt, db, types, zod), defining Zod validation schemas for email and password, and creating a custom AuthenticationError class."
+    roleInFeature: "Provides foundational setup, validation rules, and error handling structure for the authentication service."
+    whatItNeeds:
+      - "bcryptjs library for hashing"
+      - "Database connection instance from '../db'"
+      - "Authentication-related types (User, UserCredentials, AuthResponse) from '@/types/auth'"
+      - "zod library for schema validation"
+    whatItGivesBack:
+      - "emailSchema: Zod schema for validating email format."
+      - "passwordSchema: Zod schema for validating password length (min 6 chars)." # Updated description
+      - "AuthenticationError: Custom error class for specific auth failures."
+    changesItMakes: []
+    needsHelpFrom: ["DB001", "TYPES001"] # Relies on DB setup and type definitions
+
+  - id: "AUTH002"
+    whatItDoes: "Handles user registration. It validates credentials, hashes the password, inserts the new user into the database, retrieves the created user data, and returns a structured response indicating success or failure."
+    roleInFeature: "Core logic for creating a new user account securely."
+    whatItNeeds:
+      - "credentials: UserCredentials object containing email and password."
+    whatItGivesBack:
+      - "AuthResponse object: Contains success status, a message, and the created User object (excluding hash) on success, or success status and an error message on failure."
+    changesItMakes:
+      - "Inserts a new record into the 'users' table in the database."
+    needsHelpFrom: ["AUTH001", "DB001", "TYPES001"] # Uses validation schemas, error class, DB connection, types, and bcrypt hashing
+
+  - id: "AUTH003"
+    whatItDoes: "Handles user login. It validates credentials, finds the user by email, verifies the provided password against the stored hash, and returns a structured response including user data (without hash) on success."
+    roleInFeature: "Core logic for authenticating an existing user."
+    whatItNeeds:
+      - "credentials: UserCredentials object containing email and password."
+    whatItGivesBack:
+      - "AuthResponse object: Contains success status, a message, and the User object (excluding hash) on success, or success status and an error message on failure."
+    changesItMakes: []
+    needsHelpFrom: ["AUTH001", "DB001", "TYPES001"] # Uses validation schemas, DB connection, types, and bcrypt comparison
+
+  # API Route Definitions (src/app/api/auth/register/route.ts)
+  - id: "API001"
+    whatItDoes: "Defines the server-side API endpoint (POST /api/auth/register). It parses the request body for credentials, calls the `registerUser` service function, and returns a JSON response with the appropriate status code (201 on success, 400 on failure, 500 on internal error)."
+    roleInFeature: "Exposes the user registration functionality over HTTP."
+    whatItNeeds:
+      - "NextRequest: Containing user email and password in the JSON body."
+    whatItGivesBack:
+      - "NextResponse: JSON object with registration result and status code."
+    changesItMakes: []
+    needsHelpFrom: ["AUTH002", "TYPES001"] # Calls the registration service logic and uses auth types
+
+  # API Route Definitions (src/app/api/auth/login/route.ts)
+  - id: "API002"
+    whatItDoes: "Defines the server-side API endpoint (POST /api/auth/login). It parses credentials, calls the `loginUser` service function, sets an HTTP-only session cookie upon successful login, and returns a JSON response with the appropriate status code (200 on success, 401 on failure, 500 on internal error)."
+    roleInFeature: "Exposes the user login functionality over HTTP and manages user sessions via cookies."
+    whatItNeeds:
+      - "NextRequest: Containing user email and password in the JSON body."
+    whatItGivesBack:
+      - "NextResponse: JSON object with login result and status code. Includes a 'Set-Cookie' header on success."
+    changesItMakes:
+      - "Sets an HTTP-only 'session' cookie containing the user ID upon successful login."
+    needsHelpFrom: ["AUTH003", "TYPES001"] # Calls the login service logic and uses auth types
+
+  # API Route Definitions (src/app/api/auth/logout/route.ts)
+  - id: "API003"
+    whatItDoes: "Defines the server-side API endpoint (POST /api/auth/logout). It clears the user's session cookie by setting its expiration date to the past and returns a success JSON response."
+    roleInFeature: "Provides a mechanism for users to securely end their session."
+    whatItNeeds: [] # No input needed from the request body
+    whatItGivesBack:
+      - "NextResponse: JSON object indicating successful logout (status 200). Includes a 'Set-Cookie' header to clear the session cookie."
+    changesItMakes:
+      - "Instructs the browser to clear the 'session' cookie."
+    needsHelpFrom: []
+
+  # UI Component Definitions (src/components/ui/Button.tsx)
+  - id: "UI001"
+    whatItDoes: "Provides a reusable, styled button component with support for primary/secondary variants, a loading state (showing a spinner), and standard HTML button attributes. It combines base styles, variant styles, and custom classes."
+    roleInFeature: "Ensures consistent button appearance and behavior throughout the application, including visual feedback during asynchronous operations."
+    whatItNeeds:
+      - "children: ReactNode (content inside the button)."
+      - "variant (optional): 'primary' | 'secondary' (defaults to 'primary')."
+      - "isLoading (optional): boolean (defaults to false)."
+      - "className (optional): string for additional Tailwind classes."
+      - "Other standard HTMLButtonElement attributes (e.g., type, onClick, disabled)."
+    whatItGivesBack:
+      - "A styled HTML <button> element."
+    changesItMakes: []
+    needsHelpFrom: [] # Self-contained UI component
+
+  # Auth Component Definitions (src/components/auth/LoginForm.tsx)
+  - id: "AUTH004"
+    whatItDoes: "Renders a client-side login form with email and password fields. It handles form submission, calls the login API endpoint, updates the global AuthContext state on success, displays loading states and error messages, and redirects the user to the dashboard." # Updated description
+    roleInFeature: "Provides the user interface for authentication and updates global state." # Updated role
+    whatItNeeds:
+      - "AuthContext via useAuth hook (AUTH_CTX001)." # Added need
+      - "useRouter hook from next/navigation."
+      - "useState hook from React."
+      - "Button component (UI001)."
+    whatItGivesBack:
+      - "A React form component for user login."
+    changesItMakes:
+      - "Calls the login function from AuthContext on successful API response." # Added change
+      - "Client-side navigation to '/dashboard' on successful login."
+      - "Updates internal state for loading and error messages."
+    needsHelpFrom: ["UI001", "API002", "AUTH_CTX001"] # Updated dependencies
+
+  # Auth Component Definitions (src/components/auth/RegisterForm.tsx)
+  - id: "AUTH005"
+    whatItDoes: "Renders a client-side registration form with email and password fields. It handles form submission, calls the registration API endpoint, displays loading states and error messages, and redirects the user to the login page upon successful registration."
+    roleInFeature: "Provides the user interface for creating a new account."
+    whatItNeeds: [] # Renders itself, interacts with user input.
+    whatItGivesBack:
+      - "A React form component for user registration."
+    changesItMakes:
+      - "Client-side navigation to '/login?registered=true' on successful registration."
+      - "Updates internal state for loading and error messages."
+    needsHelpFrom: ["UI001", "API001"] # Uses the Button component and interacts with the registration API endpoint
+
+  # Auth Context Definition (src/context/AuthContext.tsx)
+  - id: "AUTH_CTX001"
+    whatItDoes: "Provides a global authentication context (AuthProvider) that manages authentication state (isAuthenticated, user, isLoading) and provides functions (login, logout) to update this state. It performs an initial check on mount to determine the user's status."
+    roleInFeature: "Centralizes authentication state management, making it accessible throughout the application and ensuring components react consistently to login/logout events."
+    whatItNeeds:
+      - "children: ReactNode to wrap within the provider."
+      - "User type from '@/types/auth'."
+      - "Access to the /api/auth/user endpoint (API004) for initial check."
+    whatItGivesBack:
+      - "AuthContext.Provider: Supplies isAuthenticated (boolean), user (User | null), isLoading (boolean), login (function), and logout (function) to consuming components."
+    changesItMakes:
+      - "Manages internal state for isAuthenticated, user, and isLoading."
+      - "Makes a GET request to /api/auth/user on initial mount."
+    needsHelpFrom: ["TYPES001", "API004"] # Depends on User type and user API endpoint for initial check
+
+  # Database Seeding Script (scripts/seed.ts)
+  - id: "SCRIPT001"
+    whatItDoes: "Seeds the database with 5 dummy users, all having the same password ('harsha'). It hashes the password and inserts the users using a transaction, ignoring insertions if a user with the same email already exists."
+    roleInFeature: "Provides a way to populate the database with initial user data for testing or demonstration purposes."
+    whatItNeeds:
+      - "Database connection instance from '../src/lib/db' (DB001)."
+      - "bcryptjs library for hashing."
+    whatItGivesBack:
+      - "Console output indicating the progress and result of the seeding process."
+    changesItMakes:
+      - "Inserts records into the 'users' table if they don't already exist."
+    needsHelpFrom: ["DB001"] # Depends on the database connection

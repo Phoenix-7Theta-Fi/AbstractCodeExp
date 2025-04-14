@@ -24,7 +24,7 @@
     *   **Comment Format:** Use the format `# ComponentName Definition (src/path/to/file.ext)` for file group headers.
 *   **Your Interaction:**
     *   **Read-First:** You MUST **read** this file first to understand the current system context and architecture.
-    *   **Write-Last:** After implementing code changes, propose complete YAML definitions (including dependencies) that accurately reflect your implementation. The developer will review and add these definitions to the manifest.
+    *   **Write-Last:** After implementing code changes, **update** the manifest with complete YAML definitions (including dependencies) that accurately reflect your implementation.
 
 **3. Snippets: The Building Blocks**
 
@@ -105,6 +105,7 @@
     async function handleRegistrationLogic(email, password) { /* ... */ }
     ```
 *   **Your Responsibility:** Add this marker correctly when generating/modifying code for a defined snippet.
+*   **Required Practice:** In addition to the marker, you MUST add detailed step-by-step comments *within* the snippet block (like `// Step 1: ...`, `// Step 2: ...`) to clearly document the implementation logic.
 
 **5. The Core Workflow: Context-First, Code-First Update Cycle**
 
@@ -119,42 +120,131 @@ This is the standard operational flow you must follow:
     * Organize the code into logical snippets following granularity guidelines
     * Add `// AbstractSnippet: [SnippetID]` markers to each logical code block
 4.  **Manifest Update:**
-    * After implementing the code, propose complete YAML definitions (including dependencies) that accurately reflect your implemented code
-    * The developer will review and add these definitions to the manifest
-5.  **Confirmation:** Report back to the developer confirming both the code implementation and manifest updates.
+    * After implementing the code, **update** the manifest with complete YAML definitions (including dependencies) that accurately reflect your implemented code.
+5.  **Confirmation:** Report back to the developer confirming both the code implementation and manifest **updates**.
 
-**6. Few-Shot Example: Context-First, Code-First Flow**
+**6. Few-Shot Example: Context-First, Code-First Flow with Granularity**
 
-Let's reimagine implementing email validation:
+Let's illustrate implementing a chart component:
 
 *   **Step 1: Developer Instruction:**
-    `"Add email validation to the registration form"`
-*   **Step 2: System Understanding:** 
-    * Read `AbstractManifest.yaml` to understand existing validation patterns and snippets
-    * Read relevant source files (`src/utils/validation.ts`, `src/components/RegistrationForm.tsx`)
-*   **Step 3: Code Implementation:**
-    ```javascript
-    // src/utils/validation.ts
-    
-    // AbstractSnippet: UTIL005
-    function isValidEmailFormat(email: string): boolean {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      return emailRegex.test(email)
-    }
+    `"Create a new chart component in 'src/components/Chart.tsx' that takes raw data, processes it, calculates metrics, and renders a chart with a legend."`
+*   **Step 2: System Understanding:**
+    * Read `AbstractManifest.yaml` to identify any existing chart-related utilities or base components.
+    * Check `src/components/` for potential reusable elements. (Assume none relevant for this example).
+*   **Step 3: Code Implementation (Multiple Snippets in one file):**
+    ```typescript
+    // src/components/Chart.tsx
+    import React from 'react';
+    // Assume ECharts or similar library is imported
+
+    // AbstractSnippet: CHART001_DATA
+    // --- Process Raw Chart Data ---
+    const processChartData = (rawData: any[]): ProcessedData => {
+      // Step 1: Validate rawData structure.
+      // Step 2: Transform rawData into the required intermediate format.
+      // Step 3: Return the processed data.
+      console.log("Processing data:", rawData); // Placeholder
+      return { processed: true, items: rawData.length }; // Placeholder
+    };
+
+    // AbstractSnippet: CHART001_ANALYSIS
+    // --- Calculate Chart Metrics ---
+    const calculateMetrics = (processedData: ProcessedData): ChartMetrics => {
+      // Step 1: Perform calculations based on processedData.
+      // Step 2: Generate metrics needed for chart rendering (e.g., series data, axes labels).
+      // Step 3: Prepare data for the legend.
+      console.log("Calculating metrics:", processedData); // Placeholder
+      return { series: [1, 2, 3], legendItems: ["A", "B"] }; // Placeholder
+    };
+
+    // AbstractSnippet: CHART001_RENDER
+    // --- Render Core Chart ---
+    const renderCoreChart = (metrics: ChartMetrics): JSX.Element => {
+      // Step 1: Configure the chart options using the calculated metrics.
+      const options = { /* ... use metrics.series ... */ };
+      // Step 2: Render the chart using a charting library component (e.g., ReactECharts).
+      console.log("Rendering core chart with options:", options); // Placeholder
+      return <div className="core-chart">Core Chart Area</div>; // Placeholder for actual chart lib component
+    };
+
+    // AbstractSnippet: CHART001_LEGEND
+    // --- Render Chart Legend ---
+    const ChartLegend = ({ items }: { items: string[] }): JSX.Element => {
+      // Step 1: Map through legend items.
+      // Step 2: Render each item with appropriate styling.
+      return (
+        <ul className="chart-legend">
+          {items.map(item => <li key={item}>{item}</li>)}
+        </ul>
+      );
+    };
+
+    // AbstractSnippet: CHART001
+    // --- Main Chart Component ---
+    export const Chart = ({ data }: { data: any[] }): JSX.Element => {
+      // Step 1: Process the raw input data.
+      const processed = processChartData(data);
+      // Step 2: Calculate metrics from the processed data.
+      const metrics = calculateMetrics(processed);
+      // Step 3: Render the main chart structure, including the core chart and legend.
+      return (
+        <div className="chart-container">
+          {/* Step 3a: Render the core chart visualization */}
+          {renderCoreChart(metrics)}
+          {/* Step 3b: Render the chart legend */}
+          <ChartLegend items={metrics.legendItems} />
+        </div>
+      );
+    };
+
+    // Helper types (could be in a separate types file or here)
+    interface ProcessedData { processed: boolean; items: number; }
+    interface ChartMetrics { series: number[]; legendItems: string[]; }
+
     ```
 *   **Step 4: Manifest Update:**
-    * Propose complete YAML definition (including analyzed dependencies):
+    * **Update** the manifest with complete YAML definitions for all new snippets:
     ```yaml
-    - id: "UTIL005"
-      whatItDoes: "Validates email format using regex pattern"
-      roleInFeature: "Ensures user inputs valid email in registration"
-      whatItNeeds: ["Email string to validate"]
-      whatItGivesBack: ["Boolean indicating if email is valid"]
+    # Chart Component Definitions (src/components/Chart.tsx)
+    - id: "CHART001_DATA"
+      whatItDoes: "Processes raw input data into an intermediate format suitable for metric calculation."
+      roleInFeature: "Handles initial data transformation for the chart component."
+      whatItNeeds: ["Raw data array (any[])"]
+      whatItGivesBack: ["ProcessedData object"]
       changesItMakes: ["None"]
-      needsHelpFrom: ["UTIL001"] # Using email regex pattern from UTIL001
+      needsHelpFrom: []
+    - id: "CHART001_ANALYSIS"
+      whatItDoes: "Calculates specific metrics (e.g., series data, legend items) from processed data."
+      roleInFeature: "Performs the necessary calculations for chart visualization."
+      whatItNeeds: ["ProcessedData object from CHART001_DATA"]
+      whatItGivesBack: ["ChartMetrics object"]
+      changesItMakes: ["None"]
+      needsHelpFrom: ["CHART001_DATA"] # Logically depends on the output of data processing
+    - id: "CHART001_RENDER"
+      whatItDoes: "Renders the core visualization area of the chart using calculated metrics."
+      roleInFeature: "Displays the primary graphical representation of the data."
+      whatItNeeds: ["ChartMetrics object from CHART001_ANALYSIS"]
+      whatItGivesBack: ["JSX element representing the core chart"]
+      changesItMakes: ["None"]
+      needsHelpFrom: ["CHART001_ANALYSIS"] # Depends on calculated metrics
+    - id: "CHART001_LEGEND"
+      whatItDoes: "Renders the legend part of the chart based on provided items."
+      roleInFeature: "Provides a key for interpreting the chart visualization."
+      whatItNeeds: ["Array of legend item strings (items)"]
+      whatItGivesBack: ["JSX element representing the chart legend"]
+      changesItMakes: ["None"]
+      needsHelpFrom: [] # Self-contained UI snippet
+    - id: "CHART001"
+      whatItDoes: "Acts as the main orchestrator for the Chart component. It calls data processing, metric calculation, and rendering snippets."
+      roleInFeature: "Provides the complete, integrated chart component for use in the application."
+      whatItNeeds: ["Raw data array (data)"]
+      whatItGivesBack: ["JSX element representing the complete chart component"]
+      changesItMakes: ["None"]
+      needsHelpFrom: ["CHART001_DATA", "CHART001_ANALYSIS", "CHART001_RENDER", "CHART001_LEGEND"] # Orchestrates the other snippets
     ```
 *   **Step 5: AI Confirms:**
-    `"I have implemented email validation in src/utils/validation.ts with the isValidEmailFormat function, added the marker, proposed the manifest definition (which you've added), and updated its dependencies to include UTIL001 based on the actual code implementation."`
+    `"I have implemented the Chart component in src/components/Chart.tsx, breaking it down into granular snippets (CHART001_DATA, CHART001_ANALYSIS, CHART001_RENDER, CHART001_LEGEND, CHART001) with appropriate markers and step comments. I have also **updated** the manifest with the corresponding definitions, including their dependencies, reflecting the implemented structure."`
 
 **7. Core Directives Summary (Your Rules - Autonomous Update)**
 
@@ -163,8 +253,8 @@ Let's reimagine implementing email validation:
 3.  **Code Naturally:** Write code directly into project files.
 4.  **Mark Accurately:** Use `// AbstractSnippet: [ID]` marker.
 5.  **Dependencies in Proposals:** Include analyzed dependencies in your YAML definitions based on the implemented code.
-6.  **Confirm Actions:** Inform the developer about code changes and complete manifest proposals.
-7.  **Code First:** For new features, implement the code with appropriate markers first, then propose complete manifest definitions.
+6.  **Confirm Actions:** Inform the developer about code changes and manifest **updates**.
+7.  **Code First:** For new features, implement the code with appropriate markers first, then **update** the manifest with complete definitions.
 
 **8. Handling New Features**
 
@@ -172,8 +262,7 @@ When implementing new features or making changes:
 
 1. First implement the code changes directly in the appropriate files, organizing the code into logically separated snippets following the granularity guidelines
 2. Add appropriate AbstractSnippet markers to each logical code block
-3. After implementing the code, propose complete YAML definitions (including dependencies) that accurately reflect your implementation
-4. The developer will review and add these definitions to the manifest
+3. After implementing the code, **update** the manifest with complete YAML definitions (including dependencies) that accurately reflect your implementation.
 
 This "code-first" workflow ensures the manifest definitions accurately reflect the actual implementation rather than theoretical plans.
 
